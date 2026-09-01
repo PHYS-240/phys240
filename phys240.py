@@ -91,12 +91,37 @@ def num(x, sig=6):
     Deliberately type-agnostic, so a student returning np.float64 where the
     solution returned float still passes the *value* test.  Use kind() to
     test the type separately.
+
+    Parameters
+    ----------
+    x : int or float
+        Real scalar to normalize; numpy scalar types are accepted.
+    sig : int, optional
+        Number of significant digits retained.
+
+    Returns
+    -------
+    Tag
+        ``num`` followed by the scale-free scientific-notation form.
     """
     return Tag("num " + _f(x, sig))
 
 
 def cnum(z, sig=6):
-    """Canonical form of a complex scalar."""
+    """Canonical form of a complex scalar.
+
+    Parameters
+    ----------
+    z : complex
+        Complex scalar; anything ``complex()`` accepts.
+    sig : int, optional
+        Number of significant digits retained in each component.
+
+    Returns
+    -------
+    Tag
+        ``cnum <real> <imag>``.
+    """
     z = complex(z)
     return Tag("cnum " + _f(z.real, sig) + " " + _f(z.imag, sig))
 
@@ -106,6 +131,16 @@ def kind(x):
 
     Use instead of type() to reject a wrong *category* without punishing
     int-vs-np.int64.
+
+    Parameters
+    ----------
+    x : object
+        Any value.
+
+    Returns
+    -------
+    Tag
+        ``kind <category>``, e.g. ``bool``, ``number``, ``array``.
     """
     if isinstance(x, bool):
         return Tag("kind bool")
@@ -159,17 +194,54 @@ def _elem(e, sig):
 
 
 def seq(s, sig=6):
-    """Canonical form of a list/tuple, elementwise, order-sensitive."""
+    """Canonical form of a list/tuple, elementwise, order-sensitive.
+
+    Parameters
+    ----------
+    s : list or tuple
+        Sequence to normalize elementwise.
+    sig : int, optional
+        Significant digits retained per numeric element.
+
+    Returns
+    -------
+    Tag
+        ``seq`` followed by the elements in order.
+    """
     return Tag("seq " + " ".join(_elem(e, sig) for e in s))
 
 
 def bag(s, sig=6):
-    """Canonical form of a list/tuple/set, order-INsensitive."""
+    """Canonical form of a list/tuple/set, order-INsensitive.
+
+    Parameters
+    ----------
+    s : list, tuple or set
+        Collection to normalize elementwise.
+    sig : int, optional
+        Significant digits retained per numeric element.
+
+    Returns
+    -------
+    Tag
+        ``bag`` followed by the elements sorted as strings.
+    """
     return Tag("bag " + " ".join(sorted(_elem(e, sig) for e in s)))
 
 
 def shape(a):
-    """Shape and dtype kind of an array (or length of a sequence)."""
+    """Shape and dtype kind of an array (or length of a sequence).
+
+    Parameters
+    ----------
+    a : array_like
+        Array, or any sized sequence when numpy is unavailable.
+
+    Returns
+    -------
+    Tag
+        ``shape <shape> <dtype kind>``.
+    """
     try:
         import numpy as np
         a = np.asarray(a)
@@ -183,6 +255,18 @@ def stats(a, sig=4):
 
     Cheap partial credit: catches sign errors, wrong grid endpoints and bad
     normalizations without demanding the full array match.
+
+    Parameters
+    ----------
+    a : array_like
+        Array; flattened and cast to float.
+    sig : int, optional
+        Significant digits retained per statistic.
+
+    Returns
+    -------
+    Tag
+        ``stats <min> <max> <mean> <std>``, or ``stats empty``.
     """
     import numpy as np
     a = np.asarray(a, dtype=float).ravel()
@@ -198,6 +282,18 @@ def arr(a, sig=6):
     Returns a short digest rather than the array itself, so even a
     non-hashed AUTOTEST stays a one-liner instead of pasting 1000 numbers
     into the student notebook.  Immune to numpy print options.
+
+    Parameters
+    ----------
+    a : array_like
+        Array of any dtype and shape.
+    sig : int, optional
+        Significant digits retained per element before hashing.
+
+    Returns
+    -------
+    Tag
+        ``arr`` followed by a 16-hex-character SHA-256 prefix.
     """
     import numpy as np
     a = np.asarray(a)
@@ -219,18 +315,58 @@ def close(a, b, rtol=1e-5, atol=1e-8):
     iterative solvers)::
 
         ### AUTOTEST p240.close(estimate_pi(10**6), 3.14159, rtol=1e-2)
+
+    Parameters
+    ----------
+    a : array_like
+        Value under test.
+    b : array_like
+        Reference value.
+    rtol : float, optional
+        Relative tolerance passed to ``numpy.allclose``.
+    atol : float, optional
+        Absolute tolerance passed to ``numpy.allclose``.
+
+    Returns
+    -------
+    Tag
+        ``close True`` or ``close False``.
     """
     import numpy as np
     return Tag("close " + str(bool(np.allclose(a, b, rtol=rtol, atol=atol))))
 
 
 def keys(d):
-    """Sorted keys of a mapping."""
+    """Sorted keys of a mapping.
+
+    Parameters
+    ----------
+    d : dict
+        Mapping whose keys are stringified.
+
+    Returns
+    -------
+    Tag
+        ``keys`` followed by the sorted key names.
+    """
     return Tag("keys " + " ".join(sorted(map(str, d.keys()))))
 
 
 def mapping(d, sig=6):
-    """Canonical key-value form of a mapping."""
+    """Canonical key-value form of a mapping.
+
+    Parameters
+    ----------
+    d : dict
+        Mapping to normalize.
+    sig : int, optional
+        Significant digits retained per value.
+
+    Returns
+    -------
+    Tag
+        ``map`` followed by sorted ``key=value`` pairs.
+    """
     items = sorted((str(k), _elem(v, sig)) for k, v in d.items())
     return Tag("map " + " ".join(f"{k}={v}" for k, v in items))
 
@@ -241,6 +377,20 @@ def raises(fn, *args, **kwargs):
     The autotest replacement for ``assert_raises``::
 
         ### AUTOTEST p240.raises(get_resistor_value, ['bl', 'bl'])
+
+    Parameters
+    ----------
+    fn : callable
+        Function to invoke.
+    *args
+        Positional arguments forwarded to `fn`.
+    **kwargs
+        Keyword arguments forwarded to `fn`.
+
+    Returns
+    -------
+    Tag
+        ``raises <ExceptionType>``, or ``raises None`` if nothing raised.
     """
     try:
         fn(*args, **kwargs)
@@ -254,6 +404,16 @@ def signature(fn):
 
     Catches renamed or reordered parameters, which silently break keyword
     calls later in the assignment.
+
+    Parameters
+    ----------
+    fn : callable
+        Function to introspect.
+
+    Returns
+    -------
+    Tag
+        ``sig`` followed by ``name=default`` for each parameter, in order.
     """
     parts = []
     for name, p in inspect.signature(fn).parameters.items():
@@ -268,6 +428,19 @@ def attrs(obj, *names):
     For custom classes (the Vector class in ps10, say)::
 
         ### AUTOTEST p240.attrs(Vector(1,2,3), 'x', 'mag', 'dot', 'cross')
+
+    Parameters
+    ----------
+    obj : object
+        Instance to inspect.
+    *names
+        Attribute or method names to look for.
+
+    Returns
+    -------
+    Tag
+        ``attrs`` followed by ``name=<category>``, ``name=callable`` or
+        ``name=MISSING`` for each requested name.
     """
     out = []
     for n in names:
@@ -283,12 +456,36 @@ def attrs(obj, *names):
 # --- matplotlib -------------------------------------------------------
 
 def nlines(ax):
-    """Number of Line2D objects on an Axes."""
+    """Number of Line2D objects on an Axes.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to inspect.
+
+    Returns
+    -------
+    Tag
+        ``nlines <count>``.
+    """
     return Tag(f"nlines {len(ax.get_lines())}")
 
 
 def linedata(ax, sig=4):
-    """Checksum of every line's x and y data on an Axes."""
+    """Checksum of every line's x and y data on an Axes.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes whose lines are hashed.
+    sig : int, optional
+        Significant digits retained per data point.
+
+    Returns
+    -------
+    Tag
+        ``linedata`` followed by a 16-hex-character SHA-256 prefix.
+    """
     parts = []
     for ln in ax.get_lines():
         parts.append(str(arr(ln.get_xdata(), sig)))
@@ -302,6 +499,16 @@ def labeled(ax):
 
     Checks that labels EXIST rather than matching their text, so students
     are not punished for wording.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to inspect.
+
+    Returns
+    -------
+    Tag
+        ``labeled <xlabel> <ylabel> <title>``, each ``True`` or ``False``.
     """
     return Tag("labeled "
                + str(bool(ax.get_xlabel().strip()))
@@ -310,7 +517,20 @@ def labeled(ax):
 
 
 def limits(ax, sig=3):
-    """Axis limits at reduced precision."""
+    """Axis limits at reduced precision.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to inspect.
+    sig : int, optional
+        Significant digits retained per limit.
+
+    Returns
+    -------
+    Tag
+        ``limits <xmin> <xmax> <ymin> <ymax>``.
+    """
     return Tag("limits " + " ".join(
         _f(v, sig) for v in (*ax.get_xlim(), *ax.get_ylim())))
 
@@ -382,13 +602,33 @@ def docstring(func, require_raises=False):
     Prefer assert_docstring() in most cases: its message names the specific
     problem, and unlike a physics answer there is no reason to hide from a
     student that their Returns section is missing.
+
+    Parameters
+    ----------
+    func : callable
+        Function whose docstring is checked.
+    require_raises : bool, optional
+        Also require a non-empty Raises section.
+
+    Returns
+    -------
+    Tag
+        ``docstring ok``, or ``docstring <n>`` with the problem count.
     """
     problems = check_docstring(func, require_raises=require_raises)
     return Tag("docstring " + ("ok" if not problems else str(len(problems))))
 
 
 def assert_docstring(func, require_raises=False):
-    """Assert that a function's docstring meets the basic numpydoc subset."""
+    """Assert that a function's docstring meets the basic numpydoc subset.
+
+    Parameters
+    ----------
+    func : callable
+        Function whose docstring is checked.
+    require_raises : bool, optional
+        Also require a non-empty Raises section.
+    """
     problems = check_docstring(func, require_raises=require_raises)
     assert not problems, (
         f"The docstring for `{func.__name__}` does not meet the course's "
@@ -404,7 +644,20 @@ MIN_FIGURE_BYTES = 2000
 
 
 def figure_path(n, directory=FIGURE_DIR):
-    """Canonical path for the figure belonging to problem `n`."""
+    """Canonical path for the figure belonging to problem `n`.
+
+    Parameters
+    ----------
+    n : int
+        Problem number.
+    directory : str, optional
+        Directory holding the figures.
+
+    Returns
+    -------
+    str
+        Path of the form ``<directory>/problem<n>.pdf``.
+    """
     return os.path.join(directory, f"problem{int(n)}.pdf")
 
 
@@ -413,6 +666,17 @@ def save_figure(fig, n, directory=FIGURE_DIR, **kwargs):
 
     Creates the directory if needed and defaults to a tight bounding box so
     the compiled portfolio is visually consistent.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure to write.
+    n : int
+        Problem number.
+    directory : str, optional
+        Destination directory; created if absent.
+    **kwargs
+        Extra keyword arguments forwarded to ``Figure.savefig``.
 
     Returns
     -------
@@ -427,14 +691,39 @@ def save_figure(fig, n, directory=FIGURE_DIR, **kwargs):
 
 
 def has_figure(n, directory=FIGURE_DIR, min_bytes=MIN_FIGURE_BYTES):
-    """Whether problem `n`'s figure exists and is not a blank canvas."""
+    """Whether problem `n`'s figure exists and is not a blank canvas.
+
+    Parameters
+    ----------
+    n : int
+        Problem number.
+    directory : str, optional
+        Directory holding the figures.
+    min_bytes : int, optional
+        Size floor below which the file is treated as a blank canvas.
+
+    Returns
+    -------
+    Tag
+        ``figure True`` or ``figure False``.
+    """
     path = figure_path(n, directory)
     ok = os.path.exists(path) and os.path.getsize(path) >= min_bytes
     return Tag("figure " + str(bool(ok)))
 
 
 def assert_figure(n, directory=FIGURE_DIR, min_bytes=MIN_FIGURE_BYTES):
-    """Assert that problem `n`'s figure was written and is non-trivial."""
+    """Assert that problem `n`'s figure was written and is non-trivial.
+
+    Parameters
+    ----------
+    n : int
+        Problem number.
+    directory : str, optional
+        Directory holding the figures.
+    min_bytes : int, optional
+        Size floor below which the file is treated as a blank canvas.
+    """
     path = figure_path(n, directory)
     assert os.path.exists(path), (
         f"Expected to find `{path}`, but it does not exist. Save your figure "
@@ -507,7 +796,17 @@ def build_portfolio(expected=None, directory=FIGURE_DIR,
 
 def assert_portfolio(directory=FIGURE_DIR, out="portfolio.pdf",
                      min_bytes=MIN_FIGURE_BYTES):
-    """Assert that the compiled portfolio exists and is non-trivial."""
+    """Assert that the compiled portfolio exists and is non-trivial.
+
+    Parameters
+    ----------
+    directory : str, optional
+        Directory holding the figures.
+    out : str, optional
+        Portfolio filename, relative to `directory`.
+    min_bytes : int, optional
+        Size floor below which the portfolio is treated as empty.
+    """
     path = os.path.join(directory, out)
     assert os.path.exists(path), (
         f"Expected `{path}`. Run the portfolio cell at the end of the "
@@ -559,6 +858,19 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, msg=None):
     """Array-aware near-equality, since assert_almost_equal is scalar-only.
 
     Use this in place of looping assert_almost_equal over array elements.
+
+    Parameters
+    ----------
+    actual : array_like
+        Value under test.
+    desired : array_like
+        Reference value.
+    rtol : float, optional
+        Relative tolerance.
+    atol : float, optional
+        Absolute tolerance.
+    msg : str, optional
+        Message prepended to the failure output.
     """
     import numpy as np
     np.testing.assert_allclose(actual, desired, rtol=rtol, atol=atol,
