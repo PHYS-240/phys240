@@ -1,0 +1,220 @@
+# autotests.yml -- PHYS 240 automatic test generation
+#
+# Lives in the course root directory.  Drop a modified copy into an
+# assignment's source/ directory to override it for that assignment only.
+#
+# Requires phys240.py alongside it (and in each assignment source dir).
+#
+# Reminders about how this file is used:
+#   * dispatch runs against YOUR SOLUTION at generate time, so the template
+#     chosen reflects the type of the correct answer, not the student's.
+#     That is why the value tests below go through type-agnostic helpers.
+#   * the `test` expression is wrapped in `normalize`, then optionally in
+#     `hash`, then substituted into `check`.
+#   * every test in a cell must pass; the first failure stops the cell.
+#     Order tests coarse -> fine so the message a student sees is the most
+#     informative one.
+
+python3:
+
+    setup: |
+        import phys240 as p240
+        from hashlib import sha256
+
+    hash: 'sha256({{snippet}}.encode("utf-8")+b"{{salt}}").hexdigest()'
+
+    dispatch: "type({{snippet}})"
+
+    normalize: "str({{snippet}})"
+
+    check: 'assert {{snippet}} == """{{value}}""", """{{message}}"""'
+
+    success: "print('All tests in this cell passed.')"
+
+    templates:
+
+        # ------------------------------------------------------------------
+        # fallback
+        # ------------------------------------------------------------------
+        default:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} is not the right kind of object"
+
+            - test: "{{snippet}}"
+              fail: "value of {{snippet}} is not correct"
+
+        # ------------------------------------------------------------------
+        # explicit helper calls in the directive, e.g.
+        #   ### HASHED AUTOTEST p240.num(area, 3)
+        # ------------------------------------------------------------------
+        phys240.Tag:
+            - test: "{{snippet}}"
+              fail: "{{snippet}} is not correct"
+
+        # ------------------------------------------------------------------
+        # numbers
+        # ------------------------------------------------------------------
+        int:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a number"
+
+            - test: "p240.num({{snippet}}, 12)"
+              fail: "value of {{snippet}} is not correct"
+
+        float:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a number"
+
+            - test: "p240.num({{snippet}}, 3)"
+              fail: "value of {{snippet}} is wrong by more than a few percent"
+
+            - test: "p240.num({{snippet}}, 6)"
+              fail: "value of {{snippet}} is close but not correct to 6 significant digits -- check for a truncated series, a loose tolerance, or an off-by-one in a loop"
+
+        numpy.float64:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a number"
+
+            - test: "p240.num({{snippet}}, 3)"
+              fail: "value of {{snippet}} is wrong by more than a few percent"
+
+            - test: "p240.num({{snippet}}, 6)"
+              fail: "value of {{snippet}} is close but not correct to 6 significant digits"
+
+        numpy.int64:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a number"
+
+            - test: "p240.num({{snippet}}, 12)"
+              fail: "value of {{snippet}} is not correct"
+
+        complex:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a complex number"
+
+            - test: "p240.cnum({{snippet}}, 6)"
+              fail: "value of {{snippet}} is not correct"
+
+        bool:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be True or False, not a number or a string"
+
+            - test: "{{snippet}}"
+              fail: "value of {{snippet}} is not correct"
+
+        numpy.bool:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be True or False"
+
+            - test: "bool({{snippet}})"
+              fail: "value of {{snippet}} is not correct"
+
+        NoneType:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be None -- did you forget a return statement, or return something you should not have?"
+
+        # ------------------------------------------------------------------
+        # arrays
+        # ------------------------------------------------------------------
+        numpy.ndarray:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a numpy array. A list is not an array -- use np.array() or np.asarray()"
+
+            - test: "p240.shape({{snippet}})"
+              fail: "shape or dtype of {{snippet}} is not correct"
+
+            - test: "p240.stats({{snippet}}, 4)"
+              fail: "the range and average of {{snippet}} are wrong -- check your formula and the endpoints of your grid"
+
+            - test: "p240.arr({{snippet}}, 6)"
+              fail: "{{snippet}} has the right shape and roughly the right range, but individual values are not correct to 6 significant digits"
+
+        # ------------------------------------------------------------------
+        # containers
+        # ------------------------------------------------------------------
+        list:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a list"
+
+            - test: "len({{snippet}})"
+              fail: "length of {{snippet}} is not correct"
+
+            - test: "p240.bag({{snippet}}, 6)"
+              fail: "the values in {{snippet}} are not correct"
+
+            - test: "p240.seq({{snippet}}, 6)"
+              fail: "{{snippet}} contains the right values but in the wrong order"
+
+        tuple:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a tuple"
+
+            - test: "len({{snippet}})"
+              fail: "{{snippet}} does not have the right number of elements -- check how many values you return"
+
+            - test: "p240.seq({{snippet}}, 6)"
+              fail: "the values in {{snippet}} are not correct, or are in the wrong order"
+
+        set:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a set"
+
+            - test: "len({{snippet}})"
+              fail: "number of elements in {{snippet}} is not correct"
+
+            - test: "p240.bag({{snippet}}, 6)"
+              fail: "the values in {{snippet}} are not correct"
+
+        dict:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a dict"
+
+            - test: "p240.keys({{snippet}})"
+              fail: "the keys of {{snippet}} are not correct"
+
+            - test: "p240.mapping({{snippet}}, 6)"
+              fail: "the keys of {{snippet}} are right but the values are not"
+
+        str:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a string"
+
+            - test: "len({{snippet}}.strip())"
+              fail: "length of {{snippet}} is not correct"
+
+            - test: "{{snippet}}.strip().lower()"
+              fail: "value of {{snippet}} is not correct"
+
+            - test: "{{snippet}}.strip()"
+              fail: "{{snippet}} is correct apart from capitalization"
+
+        # ------------------------------------------------------------------
+        # callables and classes
+        # ------------------------------------------------------------------
+        function:
+            - test: "p240.kind({{snippet}})"
+              fail: "{{snippet}} should be a function -- did you assign a value to that name instead of defining it with def?"
+
+            - test: "p240.signature({{snippet}})"
+              fail: "{{snippet}} does not take the parameters described in the prompt (check names, order, and defaults)"
+
+        type:
+            - test: "{{snippet}}"
+              fail: "type of {{snippet}} is not correct"
+
+        # ------------------------------------------------------------------
+        # matplotlib
+        # ------------------------------------------------------------------
+        matplotlib.axes._axes.Axes:
+            - test: "p240.nlines({{snippet}})"
+              fail: "{{snippet}} does not have the expected number of plotted curves"
+
+            - test: "p240.labeled({{snippet}})"
+              fail: "{{snippet}} is missing an axis label or a title"
+
+            - test: "p240.linedata({{snippet}}, 4)"
+              fail: "the data plotted on {{snippet}} is not correct"
+
+        matplotlib.figure.Figure:
+            - test: "len({{snippet}}.axes)"
+              fail: "{{snippet}} does not have the expected number of subplots"

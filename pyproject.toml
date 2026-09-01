@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phys240"
+version = "0.1.0"
+description = "Shared testing and course utilities for PHYS 240: Computational Physics"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+docs = ["numpydoc", "matplotlib", "pypdf", "sphinx>=7", "furo"]
+test = ["numpydoc", "matplotlib", "pypdf", "pytest"]
+
+[tool.setuptools]
+py-modules = ["phys240"]
